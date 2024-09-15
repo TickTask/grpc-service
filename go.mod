@@ -8,6 +8,7 @@ require (
 )
 
 require (
+	github.com/TickTask/proto-files v0.0.0-20240915122827-ac9cb2484fc3 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/text v0.16.0 // indirect

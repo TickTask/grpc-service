@@ -1,3 +1,5 @@
+github.com/TickTask/proto-files v0.0.0-20240915122827-ac9cb2484fc3 h1:4AsBUEpyYDWSqEL4Hhc8cILONlVjOpYl1MNQfpaj8aU=
+github.com/TickTask/proto-files v0.0.0-20240915122827-ac9cb2484fc3/go.mod h1:nHgVB6sGE3isHJXEbpnv13C2BvM5NpB0ltZjdbEhJl0=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 golang.org/x/net v0.26.0 h1:soB7SVo0PWrY4vPW/+ay0jKDNScG2X9wFeYlXIvJsOQ=
