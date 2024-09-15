@@ -1,0 +1,3 @@
+[submodule "proto-files"]
+	path = proto-files
+	url = https://github.com/TickTask/proto-files
