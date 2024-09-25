@@ -1,0 +1,10 @@
+env: "prod"
+
+storage_path: "./storage/tick-task.db"
+access_token_ttl: 1h
+refresh_token_ttl: 168h
+
+grpc:
+  port: 44044
+  timeout: 10h
+
