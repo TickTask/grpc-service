@@ -128,22 +128,40 @@ func (s *Storage) SaveUserSession(ctx context.Context, userID int64, refreshToke
 	return nil
 }
 
-func (s *Storage) RefreshUserSession(ctx context.Context, deviceID string, userID int64, refreshToken string) error {
+func (s *Storage) RefreshUserSession(ctx context.Context, deviceID string, userID int64, newToken string, sessionID string, oldToken string) error {
 	const op = "storage.sqlite.refresh_user_session"
 
-	req, err := s.db.Prepare("UPDATE Sessions SET refresh_token = ? WHERE device_id = ? AND session_user_id = ?")
+	req, err := s.db.Prepare("UPDATE Sessions SET refresh_token = ? WHERE device_id = ? AND session_user_id = ? AND id = ? AND refresh_token = ?")
 
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	_, err = req.ExecContext(ctx, refreshToken, userID, deviceID)
+	r, err := req.ExecContext(ctx, newToken, deviceID, userID, sessionID, oldToken)
+
+	rows, err := r.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	if rows == 0 {
+		return fmt.Errorf("%s: %w", op, storage.ErrSessionNotFound)
+	}
+
+	return nil
+}
+
+func (s *Storage) RemoveUserSession(ctx context.Context, sessionID string, userID int64, deviceID string) error {
+	const op = "storage.sqlite.remove_user_session"
+
+	req, err := s.db.Prepare("DELETE FROM Sessions WHERE session_user_id = ? AND id = ?  AND device_id = ?")
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	_, err = req.ExecContext(ctx, userID, sessionID, deviceID)
 
 	if err != nil {
-		var sqliteErr sqlite3.Error
-		if errors.As(err, &sqliteErr) && errors.Is(sqliteErr.ExtendedCode, sqlite3.ErrConstraintUnique) {
-			return fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
-		}
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil

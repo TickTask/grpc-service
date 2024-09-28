@@ -7,6 +7,7 @@ import (
 	"net"
 	"server/internal/grpc/tasks"
 	"server/internal/grpc/user"
+	"server/internal/lib/interceptors"
 )
 
 type App struct {
@@ -16,7 +17,7 @@ type App struct {
 }
 
 func New(port int, log *slog.Logger, userService user.User, tasksService tasks.Tasks) *App {
-	gRPCServer := grpc.NewServer()
+	gRPCServer := grpc.NewServer(grpc.UnaryInterceptor(interceptors.IsAuth))
 	user.Register(gRPCServer, userService)
 	tasks.Register(gRPCServer, tasksService)
 	return &App{

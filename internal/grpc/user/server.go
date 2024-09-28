@@ -6,6 +6,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"server/internal/domain/model"
 	"server/internal/services/user"
 	userRpc "server/pkg/user"
@@ -21,6 +22,7 @@ type User interface {
 	Register(ctx context.Context, login string, password string, name string) (int64, error)
 	FetchUser(ctx context.Context, ID int64) (model.User, error)
 	RefreshToken(ctx context.Context, refreshToken string) (model.Tokens, error)
+	LogOut(ctx context.Context, userID int64, deviceID string, sessionID string) error
 }
 
 // Хэндлеры
@@ -89,12 +91,48 @@ func (s *serverApi) GetUser(ctx context.Context, request *userRpc.GetUserRequest
 	}, nil
 }
 
-func (s *serverApi) RefreshToken(ctx context.Context, request *userRpc.RefreshTokenRequest) (*userRpc.RegisterUserResponse, error) {
+func (s *serverApi) RefreshToken(ctx context.Context, request *userRpc.RefreshTokenRequest) (*userRpc.RefreshTokenResponse, error) {
 	err := validateRefreshToken(request)
+
 	if err != nil {
 		return nil, err
 	}
-	return nil, err
+
+	token, err := s.user.RefreshToken(ctx, request.GetRefreshToken())
+
+	if err != nil {
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	return &userRpc.RefreshTokenResponse{
+		AccessToken:  token.Access,
+		RefreshToken: token.Refresh,
+	}, nil
+}
+
+func (s *serverApi) LogOut(ctx context.Context, request *emptypb.Empty) (*emptypb.Empty, error) {
+	userID, ok := ctx.Value("user_id").(int64)
+
+	if !ok {
+		return nil, status.Error(codes.FailedPrecondition, "user id not found")
+	}
+
+	sessionID, ok := ctx.Value("session_id").(string)
+	if !ok {
+		return nil, status.Error(codes.FailedPrecondition, "session id not found")
+	}
+
+	deviceID, ok := ctx.Value("device_id").(string)
+	if !ok {
+		return nil, status.Error(codes.FailedPrecondition, "device id not found")
+	}
+
+	err := s.user.LogOut(ctx, userID, deviceID, sessionID)
+
+	if err != nil {
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+	return nil, nil
 }
 
 func validateLogin(req *userRpc.LoginUserRequest) error {

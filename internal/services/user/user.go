@@ -23,6 +23,7 @@ type User struct {
 	saverUser       SaverUser
 	providerUser    ProviderUser
 	sessionSaver    SessionSaver
+	sessionRemover  SessionRemover
 	accessTokenTTL  time.Duration
 	refreshTokenTTL time.Duration
 }
@@ -32,6 +33,7 @@ func New(
 	saverUser SaverUser,
 	providerUser ProviderUser,
 	sessionSaver SessionSaver,
+	sessionRemover SessionRemover,
 	accessTokenTTL time.Duration,
 	refreshTokenTTL time.Duration,
 ) *User {
@@ -40,6 +42,7 @@ func New(
 		saverUser:       saverUser,
 		providerUser:    providerUser,
 		sessionSaver:    sessionSaver,
+		sessionRemover:  sessionRemover,
 		accessTokenTTL:  accessTokenTTL,
 		refreshTokenTTL: refreshTokenTTL,
 	}
@@ -54,9 +57,13 @@ type ProviderUser interface {
 	GetUserByID(ctx context.Context, ID int64) (model.User, error)
 }
 
+type SessionRemover interface {
+	RemoveUserSession(ctx context.Context, sessionID string, userID int64, deviceID string) error
+}
+
 type SessionSaver interface {
 	SaveUserSession(ctx context.Context, userID int64, refreshToken string, sessionID string, deviceID string) error
-	RefreshUserSession(ctx context.Context, deviceID string, userID int64, refreshToken string) error
+	RefreshUserSession(ctx context.Context, deviceID string, userID int64, newToken string, sessionID string, oldToken string) error
 }
 
 func (u *User) Login(ctx context.Context, login string, password string, deviceID string) (model.Tokens, error) {
@@ -201,7 +208,7 @@ func (u *User) RefreshToken(ctx context.Context, token string) (model.Tokens, er
 		return model.Tokens{}, errors.New("error creating access token")
 	}
 
-	err = u.sessionSaver.RefreshUserSession(ctx, t.DeviceID, t.UserID, refreshToken)
+	err = u.sessionSaver.RefreshUserSession(ctx, t.DeviceID, t.UserID, refreshToken, t.SessionID, token)
 
 	if err != nil {
 		log.Error("error saving refresh token", err.Error())
@@ -211,4 +218,19 @@ func (u *User) RefreshToken(ctx context.Context, token string) (model.Tokens, er
 	tokens.Refresh = refreshToken
 
 	return tokens, nil
+}
+
+func (u *User) LogOut(ctx context.Context, userID int64, deviceID string, sessionID string) error {
+	const op = "user.session.log_out"
+
+	log := u.log.With(slog.String("op", op))
+
+	err := u.sessionRemover.RemoveUserSession(ctx, sessionID, userID, deviceID)
+
+	if err != nil {
+		log.Error("error removing user session", err.Error())
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
 }

@@ -56,7 +56,7 @@ func NewRefreshToken(userID int64, duration time.Duration, sessionID string, dev
 
 func ParseRefreshToken(requestToken string) (model.ParseTokens, error) {
 	var parsedToken model.ParseTokens
-	token, err := jwt.ParseWithClaims(requestToken, tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(requestToken, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
@@ -65,14 +65,14 @@ func ParseRefreshToken(requestToken string) (model.ParseTokens, error) {
 
 	if err != nil {
 		fmt.Println("Ошибка парсинга токена:", err)
-		return model.ParseTokens{}, nil
+		return model.ParseTokens{}, err
 	}
 
 	if !token.Valid {
 		return model.ParseTokens{}, errors.New("invalid token")
 	}
 
-	claims, ok := token.Claims.(tokenClaims)
+	claims, ok := token.Claims.(*tokenClaims)
 	if !ok {
 		return model.ParseTokens{}, errors.New("Token claims are not of type *refreshTokenClaims")
 	}
@@ -86,7 +86,7 @@ func ParseRefreshToken(requestToken string) (model.ParseTokens, error) {
 
 func ParseAccessToken(requestToken string) (model.ParseTokens, error) {
 	var parsedToken model.ParseTokens
-	token, err := jwt.ParseWithClaims(requestToken, tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(requestToken, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
@@ -100,7 +100,7 @@ func ParseAccessToken(requestToken string) (model.ParseTokens, error) {
 		return model.ParseTokens{}, errors.New("invalid token")
 	}
 
-	claims, ok := token.Claims.(tokenClaims)
+	claims, ok := token.Claims.(*tokenClaims)
 	if !ok {
 		return model.ParseTokens{}, errors.New("Token claims are not of type *refreshTokenClaims")
 	}
