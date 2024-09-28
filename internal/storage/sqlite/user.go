@@ -10,24 +10,24 @@ import (
 	"server/internal/storage"
 )
 
-type Storage struct {
+type UserStorage struct {
 	db *sql.DB
 }
 
-func New(storagePath string) (*Storage, error) {
+func NewUserStorage(storagePath string) (*UserStorage, error) {
 	const op = "storage.sqlite.new"
 	db, err := sql.Open("sqlite3", storagePath)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-	return &Storage{db: db}, nil
+	return &UserStorage{db: db}, nil
 }
 
-func (s *Storage) Stop() error {
+func (s *UserStorage) Stop() error {
 	return s.db.Close()
 }
 
-func (s *Storage) SaveUser(ctx context.Context, login string, passHash []byte, name string) (int64, error) {
+func (s *UserStorage) SaveUser(ctx context.Context, login string, passHash []byte, name string) (int64, error) {
 	const op = "storage.sqlite.save_user"
 
 	req, err := s.db.Prepare("INSERT INTO Users(login, name, hash_password) VALUES (?, ?, ?)")
@@ -55,7 +55,7 @@ func (s *Storage) SaveUser(ctx context.Context, login string, passHash []byte, n
 	return id, nil
 }
 
-func (s *Storage) GetUser(ctx context.Context, login string) (model.User, error) {
+func (s *UserStorage) GetUser(ctx context.Context, login string) (model.User, error) {
 	const op = "storage.sqlite.get_user"
 
 	req, err := s.db.Prepare("SELECT id, login, name, hash_password FROM Users WHERE login = ?")
@@ -78,7 +78,7 @@ func (s *Storage) GetUser(ctx context.Context, login string) (model.User, error)
 	return user, nil
 }
 
-func (s *Storage) GetUserByID(ctx context.Context, ID int64) (model.User, error) {
+func (s *UserStorage) GetUserByID(ctx context.Context, ID int64) (model.User, error) {
 	const op = "storage.sqlite.get_user_by_id"
 
 	var user model.User
@@ -103,7 +103,7 @@ func (s *Storage) GetUserByID(ctx context.Context, ID int64) (model.User, error)
 	return user, nil
 }
 
-func (s *Storage) SaveUserSession(ctx context.Context, userID int64, refreshToken string, sessionID string, deviceID string) error {
+func (s *UserStorage) SaveUserSession(ctx context.Context, userID int64, refreshToken string, sessionID string, deviceID string) error {
 	const op = "storage.sqlite.save_user_session"
 
 	req, err := s.db.Prepare("INSERT INTO Sessions(id, refresh_token, session_user_id, device_id) VALUES (?, ?, ?, ?)")
@@ -128,7 +128,7 @@ func (s *Storage) SaveUserSession(ctx context.Context, userID int64, refreshToke
 	return nil
 }
 
-func (s *Storage) RefreshUserSession(ctx context.Context, deviceID string, userID int64, newToken string, sessionID string, oldToken string) error {
+func (s *UserStorage) RefreshUserSession(ctx context.Context, deviceID string, userID int64, newToken string, sessionID string, oldToken string) error {
 	const op = "storage.sqlite.refresh_user_session"
 
 	req, err := s.db.Prepare("UPDATE Sessions SET refresh_token = ? WHERE device_id = ? AND session_user_id = ? AND id = ? AND refresh_token = ?")
@@ -151,7 +151,7 @@ func (s *Storage) RefreshUserSession(ctx context.Context, deviceID string, userI
 	return nil
 }
 
-func (s *Storage) RemoveUserSession(ctx context.Context, sessionID string, userID int64, deviceID string) error {
+func (s *UserStorage) RemoveUserSession(ctx context.Context, sessionID string, userID int64, deviceID string) error {
 	const op = "storage.sqlite.remove_user_session"
 
 	req, err := s.db.Prepare("DELETE FROM Sessions WHERE session_user_id = ? AND id = ?  AND device_id = ?")

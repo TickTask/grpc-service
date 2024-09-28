@@ -18,8 +18,11 @@ type App struct {
 
 func New(port int, log *slog.Logger, userService user.User, tasksService tasks.Tasks) *App {
 	gRPCServer := grpc.NewServer(grpc.UnaryInterceptor(interceptors.IsAuth))
+
 	user.Register(gRPCServer, userService)
+
 	tasks.Register(gRPCServer, tasksService)
+	
 	return &App{
 		port:       port,
 		gRPCServer: gRPCServer,
