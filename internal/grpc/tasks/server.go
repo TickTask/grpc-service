@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"server/internal/domain/model"
+	"server/internal/lib/mapper"
 	taskrpc "server/pkg/task"
 )
 
@@ -44,20 +45,13 @@ func (s *serverApi) CreateTask(ctx context.Context, request *taskrpc.CreateTaskR
 }
 
 func (s *serverApi) GetTask(ctx context.Context, request *taskrpc.GetTaskRequest) (*taskrpc.GetTaskResponse, error) {
-	_, err := s.tasks.FetchTask(ctx, request.GetTaskId())
+	task, err := s.tasks.FetchTask(ctx, request.GetTaskId())
 
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	return &taskrpc.GetTaskResponse{
-		TaskId:   0,
-		Title:    "",
-		Body:     "",
-		CreateAt: nil,
-		User:     nil,
-		Status:   nil,
-	}, nil
+	return mapper.ToTaskResponse(task), nil
 }
 
 func (s *serverApi) DeleteTask(ctx context.Context, request *taskrpc.DeleteTaskRequest) (*emptypb.Empty, error) {

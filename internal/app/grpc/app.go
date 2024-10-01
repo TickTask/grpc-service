@@ -22,7 +22,7 @@ func New(port int, log *slog.Logger, userService user.User, tasksService tasks.T
 	user.Register(gRPCServer, userService)
 
 	tasks.Register(gRPCServer, tasksService)
-	
+
 	return &App{
 		port:       port,
 		gRPCServer: gRPCServer,

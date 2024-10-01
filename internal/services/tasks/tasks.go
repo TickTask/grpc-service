@@ -71,7 +71,15 @@ func (t *Task) CreateTask(ctx context.Context, title string, body string) (int64
 }
 
 func (t *Task) FetchTask(ctx context.Context, taskID int64) (model.Task, error) {
-	return model.Task{}, nil
+	const op = "task.fetch"
+
+	task, err := t.providerTask.GetTaskByID(ctx, taskID)
+
+	if err != nil {
+		return model.Task{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return task, nil
 }
 
 func (t *Task) RemoveTask(ctx context.Context, taskID int64) error {

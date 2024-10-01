@@ -15,6 +15,6 @@ type Task struct {
 	Title     string    `json:"title"`
 	Body      string    `json:"body"`
 	CreatedAt time.Time `json:"created_at"`
-	UserID    TodosUser `json:"user"`
-	StatusID  Status    `json:"status"`
+	User      TodosUser `json:"user"`
+	Status    Status    `json:"status"`
 }
