@@ -39,6 +39,7 @@ type RemoverTask interface {
 
 type ProviderTask interface {
 	GetTaskByID(ctx context.Context, taskID int64) (model.Task, error)
+	GetAllUserTasks(ctx context.Context, userID int64) ([]model.Task, error)
 }
 
 func (t *Task) CreateTask(ctx context.Context, title string, body string) (int64, error) {
@@ -92,4 +93,22 @@ func (t *Task) RemoveTask(ctx context.Context, taskID int64) error {
 	}
 
 	return nil
+}
+
+func (t *Task) FetchTasks(ctx context.Context) ([]model.Task, error) {
+	const op = "tasks.fetch"
+
+	userID, ok := ctx.Value("user_id").(int64)
+
+	if !ok {
+		return nil, fmt.Errorf("Not found user_id in context")
+	}
+
+	tasks, err := t.providerTask.GetAllUserTasks(ctx, userID)
+
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return tasks, nil
 }

@@ -12,7 +12,7 @@ func ToTaskResponse(model model.Task) *task.GetTaskResponse {
 	u := &user.UserData{
 		UserId:   model.User.ID,
 		Username: model.User.Name,
-		Login:    "",
+		Login:    model.User.Login,
 	}
 
 	s := &status.StatusData{
@@ -29,4 +29,13 @@ func ToTaskResponse(model model.Task) *task.GetTaskResponse {
 		Status:   s,
 	}
 	return t
+}
+
+func ToTasksResponse(tasks []model.Task) []*task.GetTaskResponse {
+	var taskResponse []*task.GetTaskResponse
+	for _, t := range tasks {
+		taskResponse = append(taskResponse, ToTaskResponse(t))
+	}
+
+	return taskResponse
 }

@@ -24,6 +24,7 @@ type Tasks interface {
 	CreateTask(ctx context.Context, title string, body string) (int64, error)
 	RemoveTask(ctx context.Context, taskID int64) error
 	FetchTask(ctx context.Context, taskID int64) (model.Task, error)
+	FetchTasks(ctx context.Context) ([]model.Task, error)
 }
 
 func (s *serverApi) CreateTask(ctx context.Context, request *taskrpc.CreateTaskRequest) (*taskrpc.CreateTaskResponse, error) {
@@ -69,8 +70,17 @@ func (s *serverApi) DeleteTask(ctx context.Context, request *taskrpc.DeleteTaskR
 
 	return &emptypb.Empty{}, nil
 }
-func (s *serverApi) GetTasks(ctx context.Context, request *emptypb.Empty) (*taskrpc.GetTasksResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTasks not implemented")
+
+func (s *serverApi) GetTasks(ctx context.Context, _ *emptypb.Empty) (*taskrpc.GetTasksResponse, error) {
+	tasks, err := s.tasks.FetchTasks(ctx)
+
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	response := mapper.ToTasksResponse(tasks)
+
+	return &taskrpc.GetTasksResponse{Tasks: response}, nil
 }
 
 func validateCreateTaskRequest(request *taskrpc.CreateTaskRequest) error {

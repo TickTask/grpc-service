@@ -56,7 +56,7 @@ func (t *TaskStorage) GetTaskByID(ctx context.Context, taskID int64) (model.Task
 	var user model.TodosUser
 	var status model.Status
 
-	req, err := t.db.Prepare(`SELECT t.id, t.title, t.body, t.created_at, u.id, u.name, s.id, s.status FROM Tasks t 
+	req, err := t.db.Prepare(`SELECT t.id, t.title, t.body, t.created_at, u.id, u.name, u.login, s.id, s.status FROM Tasks t 
     INNER JOIN Users u ON u.id = t.task_user_id 
     INNER JOIN Statuses s ON t.task_status_id = s.id WHERE t.id = ?`)
 
@@ -68,7 +68,7 @@ func (t *TaskStorage) GetTaskByID(ctx context.Context, taskID int64) (model.Task
 
 	row := req.QueryRowContext(ctx, taskID)
 
-	err = row.Scan(&task.ID, &task.Title, &task.Body, &task.CreatedAt, &user.ID, &user.Name, &status.ID, &status.Status)
+	err = row.Scan(&task.ID, &task.Title, &task.Body, &task.CreatedAt, &user.ID, &user.Name, &user.Login, &status.ID, &status.Status)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -82,6 +82,50 @@ func (t *TaskStorage) GetTaskByID(ctx context.Context, taskID int64) (model.Task
 	task.Status = status
 
 	return task, nil
+}
+
+func (t *TaskStorage) GetAllUserTasks(ctx context.Context, userID int64) ([]model.Task, error) {
+	const op = "storage.sqlite.all_user_tasks"
+
+	var tasks []model.Task
+
+	req, err := t.db.Prepare(`SELECT t.id, t.title, t.body, t.created_at, u.id, u.name, u.login, s.id, s.status FROM Tasks t 
+    INNER JOIN Users u ON u.id = t.task_user_id 
+    INNER JOIN Statuses s ON t.task_status_id = s.id WHERE t.task_user_id = ?`)
+
+	defer req.Close()
+
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	rows, err := req.QueryContext(ctx, userID)
+
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var task model.Task
+		var user model.TodosUser
+		var status model.Status
+
+		err = rows.Scan(&task.ID, &task.Title, &task.Body, &task.CreatedAt, &user.ID, &user.Name, &user.Login, &status.ID, &status.Status)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", op, err)
+		}
+		task.User = user
+		task.Status = status
+		tasks = append(tasks, task)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return tasks, nil
+
 }
 
 func (t *TaskStorage) Remove(ctx context.Context, taskID int64) error {

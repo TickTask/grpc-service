@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/internal/storage/sqlite/task.go" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/1_init.down.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/migrations/1_init.up.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/migrations/2_add_statuses_to_statuses_tbl.up.sql" dialect="SQLite" />
+  </component>
+</project>

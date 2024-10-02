@@ -94,7 +94,7 @@ func ParseAccessToken(requestToken string) (model.ParseTokens, error) {
 	})
 	if err != nil {
 		fmt.Println("Ошибка парсинга токена:", err)
-		return model.ParseTokens{}, nil
+		return model.ParseTokens{}, err
 	}
 	if !token.Valid {
 		return model.ParseTokens{}, errors.New("invalid token")
